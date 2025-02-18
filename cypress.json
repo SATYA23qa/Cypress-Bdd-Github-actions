@@ -1,0 +1,20 @@
+{    
+    "baseUrl": "https://example.com",
+    "video": false,
+    "screenshotOnRunFailure": true,
+    "integrationFolder": "cypress/e2e/features",
+    "testFiles": "**/*.feature",
+    "env": {
+      "CYPRESS_USERNAME": "my_username",
+      "CYPRESS_PASSWORD": "my_password"
+    },
+    "cypress-cucumber-preprocessor": {
+      "stepDefinitions": "cypress/stepDefinitions",
+      "nonGlobalStepDefinitions": true
+    }
+  },
+  " cypress.json ==== ci/cd ,Configuration Overrides: likes baseurl, viewport   ,     
+  
+  
+  2.config  for bdd tests, 3.set environment variables , 4.disable screenshots and vidoes"
+  

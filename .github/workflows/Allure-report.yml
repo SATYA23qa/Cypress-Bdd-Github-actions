@@ -1,0 +1,39 @@
+name: Cypress Tests with Allure Report
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+
+jobs:
+  cypress-tests:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v3
+  
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: 18
+
+      - name: Install Dependencies
+        run: npm install
+       #Install Allure Dependencies:
+        # 1.npm install --save-dev @shelex/cypress-allure-plugin allure-commandline
+        # 2.
+
+
+      - name: Run Cypress Tests with Allure
+        run: |
+          npx cypress run --env allure=true   # ✅ Explicitly enable Allure reporting
+          npx allure generate cypress/report/allure-results --clean -o cypress/reports/allure-report
+
+      - name: Upload Allure Report
+        uses: actions/upload-artifact@v3
+        with:
+          name: allure-report
+          path: cypress/report/allure-report
+          retention-days: 7

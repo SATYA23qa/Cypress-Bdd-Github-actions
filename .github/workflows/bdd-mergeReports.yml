@@ -1,0 +1,59 @@
+name: Cypress Tests
+
+on: [push, pull_request]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: 18
+
+      - name: Install dependencies
+        run: npm install
+
+      - name: Run Cypress tests with Mochawesome
+        run: npx cypress run --reporter mochawesome
+
+       #If running tests in parallel, you may need to merge JSON files and generate a single HTML report.
+      - name: Merge Mochawesome Reports & Generate Mochawesome HTML Report # merge the json report 
+        run: |
+          npx mochawesome-merge cypress/reports/mochawesome/*.json > cypress/reports/mochawesome.json
+          npx mochawesome-report-generator cypress/report/report.json -o cypress/reports/mochawesome  
+           
+        # not running tests in parallel, then Cypress will generate a single JSON and HTML report   
+        #  modify in  config.js file  html:true
+      
+
+      - name: Generate JUnit Report  # Cypress Test Execution with JUnit Reporting
+                 # --reporter junit ---- Runs Cypress tests and generates a JUnit test report in XML format.      
+        run: npx cypress run --reporter junit --reporter-options mochaFile=cypress/reports/junit/test-report.xml
+                                           #  options mochafile  output location for the generated JUnit test report.
+      - name: Generate Allure Report
+        run: |
+            npx allure generate cypress/reports/allure-report --clean -o cypress/reports/allure-report
+            npx allure open cypress/reports/allure-report
+        # 1 .Generate the Allure Report:
+       #2. Open the Allure Report   default browser:       
+      - name: Upload Mochawesome HTML Report  
+        uses: actions/upload-artifact@v3
+        with:
+          name: mochawesome-html-report
+          path: cypress/reports/mochawesome/index.html
+
+      - name: Upload JUnit Report
+        uses: actions/upload-artifact@v3
+        with:
+          name: junit-report
+          path: cypress/reports/junit/junit-report.xml
+
+      - name: Upload Allure Report
+        uses: actions/upload-artifact@v3
+        with:
+          name: allure-report
+          path: cypress/reports/allure-report

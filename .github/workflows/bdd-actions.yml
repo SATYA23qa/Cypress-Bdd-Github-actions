@@ -1,0 +1,101 @@
+name: Cypress BDD Tests
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+
+jobs:
+  cypress-run:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        containers: [1, 2] # Run two instances in parallel
+        browser: [chrome,firefox,edge]  #  cross-browsers testing in ci/cd  run testss in parallel
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v3
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: 18
+
+      - name: Install Dependencies
+        run: npm install
+
+      - name: Run Cypress Tests
+        run: npx cypress run
+
+       #Enable Parallel Execution in CI/CD
+        #Modify bdd-action.yml GitHub Actions Workflow
+      - name: Run Cypress Tests in Parallel # run by default broswer  executed ci/cd,manages dashboard , subset test files 
+        run: npx cypress run --record --parallel --key ${{ secrets.CYPRESS_RECORD_KEY }} # default browser
+
+          # Run tests on Chrome and Firefox in parallel:
+      - name: Run Cypress Tests ${{ matrix.browser }}  #  Runs tests in multiple browsers separately
+        run: npx cypress run --browser ${{ matrix.browser }} --record --parallel --key ${{ secrets.CYPRESS_RECORD_KEY }} # parallel execution with specifi browser
+
+      #/Generate Mochawesome HTML Reports 
+       # 1.Install Mochawesome Reporter:
+       #  in cmd --npm install mochawesome mochawesome-merge mochawesome-report-generator --save-dev
+       # 2.update config.js for reporter options
+       # 3.modify ci/cd to upload reports :
+
+
+     # */
+      # generate  reports with  mochawesome
+      - name: Run Cypress Tests with Mochawesome
+        run: npx cypress run --reporter mochawesome
+
+      - name: Upload Mochawesome Report
+   #//  if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: mochawesome-report
+          path: cypress/reports
+
+       #// Generating Reports with Allure:
+      # 1. in cmd  npm install @shelex/cypress-allure-plugin --save-dev
+      #  add config.js file:
+       #  1.const allureWriter = require("@shelex/cypress-allure-plugin/writer"); 
+       #  2.    allureWriter(on, config);
+       # 3. env: {
+                   #allure: true,
+                  # },
+ 
+      - name: Run Cypress Tests with Allure
+        run: npx cypress run --env allure=true
+      
+      - name: Generate Allure Report
+        run: npx allure generate allure-results --clean -o allure-report
+      
+      - name: Upload Allure Report
+    #// if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: allure-report
+          path: allure-result 
+
+         
+          # GitHub Actions Workflow for Tagged Tests
+      - name: Run Cypress tests with specific tags
+        run: npx cypress run --env TAGS="@regression"   # in cmd--npx cypress run --env TAGS="@smoke"
+        
+     
+      #Add Slack Notifications for Test Failures
+      # Modify bdd-action.yml to Add Slack Notifications
+  
+      - name: Cypress Run
+        run: npx cypress run --record --key ${{ secrets.CYPRESS_RECORD_KEY }}
+        continue-on-error: true
+        
+      - name: Send Slack Notification on Failure
+        if: failure()
+        uses: rtCamp/action-slack-notify@v2
+        env:
+          SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK }}
+          SLACK_USERNAME: "Cypress CI/CD"
+          SLACK_ICON_EMOJI: ":red_circle:"
+          SLACK_MESSAGE: "Cypress Tests Failed! Check GitHub Actions logs."

@@ -1,0 +1,50 @@
+name: Cypress Tests with Multiple Reports
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+
+jobs:
+  cypress-tests:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v3
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: 18
+
+      - name: Install Dependencies
+        run: npm install
+
+      - name: Run Cypress Tests with Multiple Reporters
+        run: npx cypress run --env allure=true
+
+      - name: Upload JUnit Report
+        uses: actions/upload-artifact@v3
+        with:
+          name: junit-report
+          path: cypress/reports/junit-report.xml
+          retention-days: 7
+
+      - name: Upload Mochawesome Report
+        uses: actions/upload-artifact@v3
+        with:
+          name: mochawesome-report
+          path: cypress/reports/mochawesome
+          retention-days: 7
+
+      - name: Generate Allure Report
+        run: npx allure generate cypress/results/allure-results --clean -o cypress/results/allure-report
+
+      - name: Upload Allure Report
+        uses: actions/upload-artifact@v3
+        with:
+          name: allure-report
+          path: cypress/reports/allure-report
+          retention-days: 7
